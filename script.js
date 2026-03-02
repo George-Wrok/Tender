@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // History Table Elements
     const historyHead = document.getElementById('history-head');
     const historyBody = document.getElementById('history-body');
+    const sortSelect = document.getElementById('sort-select');
+
+    // Global Data State 
+    let currentHistoryData = [];
 
     // Google Apps Script Web App API URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMextf-2rnS1Hygj2nd18hKwvU5rT_i-qfP7B0Q0xCkq8s8Z1gDO5_jGYF9_t2G0Pp/exec';
@@ -102,7 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const parsedData = JSON.parse(cachedData);
                 if (parsedData && parsedData.length > 0) {
-                    renderHistoryTable(parsedData);
+                    currentHistoryData = parsedData;
+                    applySortingAndRender();
+
                     // 在標題旁加上一個小提示，表示這是快取資料，正在背景更新中
                     historyHead.parentElement.caption = createLoadingCaption();
                 }
@@ -122,10 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (result.status === 'success' && result.data && result.data.length > 0) {
-                // 將最新資料存入快取
+                // 將最新資料存入快取與全域狀態
                 localStorage.setItem(CACHE_KEY, JSON.stringify(result.data));
-                // 重新渲染畫面
-                renderHistoryTable(result.data);
+                currentHistoryData = result.data;
+
+                // 依據當前排序重繪畫面
+                applySortingAndRender();
             } else if (!cachedData) {
                 // 只有在沒有快取的情況下，才顯示「尚無資料」
                 historyBody.innerHTML = '<tr><td colspan="100%" class="text-center loading-text">目前尚無任何資料</td></tr>';
@@ -149,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createLoadingCaption() {
+        // ... (原樣保留)
         const caption = document.createElement('caption');
         caption.innerHTML = '<span style="font-size: 0.8rem; color: var(--text-secondary);">正在背景同步最新資料...</span>';
         caption.style.textAlign = 'right';
@@ -156,8 +165,71 @@ document.addEventListener('DOMContentLoaded', () => {
         return caption;
     }
 
+    // 將民國年轉西元年 Date (例如: 115/01/21 -> Date object)
+    function parseROCDate(dateStr) {
+        if (!dateStr) return new Date(0); // 最舊的日期做 fallback
+        // 日期常見格式：115/01/22 或是 115/01/21 - 115/02/19(預估)
+        // 使用正則匹配出最前面的民國年/月/日
+        const match = dateStr.match(/(\d{3})\/(\d{2})\/(\d{2})/);
+        if (match) {
+            const year = parseInt(match[1], 10) + 1911;
+            const month = parseInt(match[2], 10) - 1;
+            const day = parseInt(match[3], 10);
+            return new Date(year, month, day);
+        }
+        return new Date(0);
+    }
+
+    // 負責處理排序並呼叫 render
+    function applySortingAndRender() {
+        if (currentHistoryData.length === 0) {
+            renderHistoryTable([]);
+            return;
+        }
+
+        const sortValue = sortSelect.value;
+        let sortedData = [...currentHistoryData]; // 複製一份，避免改到原始順序
+
+        // 若為 default 則不另外 sort，因為 records.reverse() 在後端已將最新排前面 (也就是抓取時間最新)
+        if (sortValue !== 'default') {
+            sortedData.sort((a, b) => {
+                let dateA, dateB;
+
+                if (sortValue.startsWith('post_date')) {
+                    // 若有不同欄位名稱的可能，也可以加上 "公告日期" 的判斷
+                    dateA = parseROCDate(a['公告日'] || a['公告日期']);
+                    dateB = parseROCDate(b['公告日'] || b['公告日期']);
+                } else if (sortValue.startsWith('contract_date')) {
+                    dateA = parseROCDate(a['履約起迄日期'] || a['履約日期']);
+                    dateB = parseROCDate(b['履約起迄日期'] || b['履約日期']);
+                }
+
+                if (sortValue.endsWith('_desc')) {
+                    return dateB - dateA; // 最新
+                } else {
+                    return dateA - dateB; // 最舊
+                }
+            });
+        }
+
+        renderHistoryTable(sortedData);
+    }
+
+    // 監聽選單變化
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            applySortingAndRender();
+        });
+    }
+
     // 渲染歷史紀錄表格
     function renderHistoryTable(dataArray) {
+        if (dataArray.length === 0) {
+            historyHead.innerHTML = '';
+            historyBody.innerHTML = '<tr><td colspan="100%" class="text-center loading-text">目前尚無需要處理的資料</td></tr>';
+            return;
+        }
+
         // 第一筆資料的 Keys 當作標題
         const headers = Object.keys(dataArray[0]);
 

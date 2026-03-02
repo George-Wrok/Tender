@@ -43,7 +43,19 @@
         </div>
 
         <div id="history-container" class="history-container">
-            <h3><span class="pulse-dot"></span>試算表即時連動紀錄</h3>
+            <div class="history-header">
+                <h3><span class="pulse-dot"></span>試算表即時連動紀錄</h3>
+                <div class="sort-container">
+                    <label for="sort-select">排序：</label>
+                    <select id="sort-select" class="sort-select">
+                        <option value="default">預設排序 (最新建檔)</option>
+                        <option value="post_date_desc">公告日最新</option>
+                        <option value="post_date_asc">公告日最舊</option>
+                        <option value="contract_date_desc">履約起迄日期最新</option>
+                        <option value="contract_date_asc">履約起迄日期最舊</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-wrapper history-wrapper">
                 <table id="history-table">
                     <thead id="history-head">
