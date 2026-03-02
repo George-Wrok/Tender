@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招標網資料自動抓取器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background-elements">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <div class="container glass-panel">
+        <header>
+            <h1>招標網資料抓取器</h1>
+            <p class="subtitle">輸入招標網址，系統將自動解析並寫入您的Google試算表</p>
+        </header>
+
+        <form id="scraper-form">
+            <div class="input-group">
+                <label for="tender-url">請輸入標案網址 (URL)</label>
+                <input type="url" id="tender-url" placeholder="https://web.pcc.gov.tw/..." required autocomplete="off">
+                <div class="input-border"></div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn-primary">
+                <span class="btn-text">一鍵抓取並寫入</span>
+                <span class="btn-loader loader-hidden">
+                    <svg class="spinner" viewBox="0 0 50 50">
+                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                    </svg>
+                </span>
+            </button>
+        </form>
+
+        <div id="status-message" class="status-box hidden">
+            <!-- 訊息將在此顯示 -->
+        </div>
+
+        <div id="history-container" class="history-container">
+            <h3><span class="pulse-dot"></span>試算表即時連動紀錄</h3>
+            <div class="table-wrapper history-wrapper">
+                <table id="history-table">
+                    <thead id="history-head">
+                        <!-- 標題將動態產生 -->
+                    </thead>
+                    <tbody id="history-body">
+                        <tr>
+                            <td colspan="100%" class="text-center loading-text">努力載入雲端資料中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Modal or Section for GAS -->
+    <div class="help-section">
+        <p>若需要最新支援，請參考 <a href="GAS_Script.js" target="_blank">GAS_Script.js</a> 並貼上至您的 Google App Script 編輯器。</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
