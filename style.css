@@ -122,6 +122,24 @@ h1 {
 }
 
 /* Form Styles */
+#scraper-form {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+#scraper-form .input-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+#scraper-form .btn-primary {
+    width: auto;
+    height: 52px;
+}
+
 .input-group {
     position: relative;
     margin-bottom: 1.5rem;

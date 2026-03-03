@@ -190,36 +190,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortValue = sortSelect.value;
         let sortedData = [...currentHistoryData]; // 複製一份，避免改到原始順序
 
-        // 處理 4 個精簡後的排序選項
-        sortedData.sort((a, b) => {
-            if (sortValue === 'post_date') {
-                // 公告日 (預設：最舊到最新 -> 遞增)
-                let dateA = parseROCDate(a['公告日'] || a['公告日期']);
-                let dateB = parseROCDate(b['公告日'] || b['公告日期']);
-                return dateA - dateB;
-            } else if (sortValue === 'contract_date') {
-                // 履約日期 (預設：最舊到最新 -> 遞增)
-                let dateA = parseROCDate(a['履約起迄日期'] || a['履約日期']);
-                let dateB = parseROCDate(b['履約起迄日期'] || b['履約日期']);
-                return dateA - dateB;
-            } else if (sortValue === 'agency_address') {
-                // 機關地址 (預設：郵遞區號數字小到大 -> 遞增)
-                let aMatch = (a['機關地址'] || '').match(/^\D*(\d{1,3})/);
-                let bMatch = (b['機關地址'] || '').match(/^\D*(\d{1,3})/);
-                let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
-                let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
-                return valA - valB;
-            } else if (sortValue === 'vendor_address') {
-                // 廠商地址 (預設：郵遞區號數字小到大 -> 遞增)
-                let aMatch = (a['廠商地址'] || '').match(/^\D*(\d{1,3})/);
-                let bMatch = (b['廠商地址'] || '').match(/^\D*(\d{1,3})/);
-                let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
-                let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
-                return valA - valB;
-            }
+        // 若為 default 則不另外 sort，因為 records.reverse() 在後端已將最新排前面 (也就是抓取時間最新)
+        if (sortValue !== 'default') {
+            sortedData.sort((a, b) => {
+                if (sortValue === 'post_date') {
+                    // 公告日 (預設：最舊到最新 -> 遞增)
+                    let dateA = parseROCDate(a['公告日'] || a['公告日期']);
+                    let dateB = parseROCDate(b['公告日'] || b['公告日期']);
+                    return dateA - dateB;
+                } else if (sortValue === 'contract_date') {
+                    // 履約日期 (預設：最舊到最新 -> 遞增)
+                    let dateA = parseROCDate(a['履約起迄日期'] || a['履約日期']);
+                    let dateB = parseROCDate(b['履約起迄日期'] || b['履約日期']);
+                    return dateA - dateB;
+                } else if (sortValue === 'agency_address') {
+                    // 機關地址 (預設：郵遞區號數字小到大 -> 遞增)
+                    let aMatch = (a['機關地址'] || '').match(/^\D*(\d{1,3})/);
+                    let bMatch = (b['機關地址'] || '').match(/^\D*(\d{1,3})/);
+                    let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
+                    let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
+                    return valA - valB;
+                } else if (sortValue === 'vendor_address') {
+                    // 廠商地址 (預設：郵遞區號數字小到大 -> 遞增)
+                    let aMatch = (a['廠商地址'] || '').match(/^\D*(\d{1,3})/);
+                    let bMatch = (b['廠商地址'] || '').match(/^\D*(\d{1,3})/);
+                    let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
+                    let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
+                    return valA - valB;
+                }
 
-            return 0; // fallback
-        });
+                return 0; // fallback
+            });
+        }
 
         renderHistoryTable(sortedData);
     }
