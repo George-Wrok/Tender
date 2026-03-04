@@ -23,8 +23,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     position: relative;
     overflow-x: hidden;
 }
@@ -46,7 +44,6 @@ body {
     border-radius: 50%;
     filter: blur(80px);
     opacity: 0.5;
-    animation: float 10s infinite ease-in-out alternate;
 }
 
 .orb-1 {
@@ -81,24 +78,18 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
-    max-width: 500px;
+    max-width: 100%;
     padding: 2.5rem;
-    margin: 1rem;
-    border-radius: 20px;
+    margin: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .glass-panel {
     background: var(--panel-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--panel-border);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.glass-panel:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
 header {
@@ -371,13 +362,13 @@ tr:hover td {
 
 /* Update Container max-width to accommodate table */
 .container {
-    width: 95%;
-    max-width: 1600px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .history-container {
-    margin-top: 3rem;
-    padding-top: 2rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
     border-top: 1px dashed rgba(255, 255, 255, 0.2);
 }
 
@@ -465,8 +456,7 @@ tr:hover td {
 }
 
 .history-wrapper {
-    max-height: 400px;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 
 /* Scrollbar styles to look modern */
@@ -502,8 +492,8 @@ tr:hover td {
 /* 響應式網頁設計 (手機版) */
 @media (max-width: 600px) {
     .container {
-        padding: 2rem;
-        margin: 1rem;
+        padding: 1rem;
+        margin: 0;
     }
 
     header h1 {
