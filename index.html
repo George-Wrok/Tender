@@ -45,16 +45,38 @@
         <div id="history-container" class="history-container">
             <div class="history-header">
                 <h3><span class="pulse-dot"></span>試算表即時連動紀錄</h3>
-                <div class="sort-container">
-                    <label for="sort-select">排序：</label>
-                    <select id="sort-select" class="sort-select">
-                        <option value="default" selected>存入時間</option>
-                        <option value="post_date">公告日</option>
-                        <option value="start_date">開始日</option>
-                        <option value="end_date">結束日</option>
-                        <option value="agency_address">機關地址</option>
-                        <option value="vendor_address">廠商地址</option>
-                    </select>
+                <div class="header-actions">
+                    <div class="filter-container">
+                        <label for="agency-filter">機關：</label>
+                        <select id="agency-filter" class="custom-select">
+                            <option value="all" selected>全部</option>
+                            <option value="taipei">台北市</option>
+                            <option value="new_taipei">新北市</option>
+                            <option value="taoyuan">桃園市</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="filter-container">
+                        <label for="vendor-filter">廠商：</label>
+                        <select id="vendor-filter" class="custom-select">
+                            <option value="all" selected>全部</option>
+                            <option value="taipei">台北市</option>
+                            <option value="new_taipei">新北市</option>
+                            <option value="taoyuan">桃園市</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="sort-container">
+                        <label for="sort-select">排序：</label>
+                        <select id="sort-select" class="custom-select">
+                            <option value="default" selected>存入時間</option>
+                            <option value="post_date">公告日</option>
+                            <option value="start_date">開始日</option>
+                            <option value="end_date">結束日</option>
+                            <option value="agency_address">機關地址</option>
+                            <option value="vendor_address">廠商地址</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="table-wrapper history-wrapper">

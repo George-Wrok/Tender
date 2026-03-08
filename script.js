@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyHead = document.getElementById('history-head');
     const historyBody = document.getElementById('history-body');
     const sortSelect = document.getElementById('sort-select');
+    const agencyFilter = document.getElementById('agency-filter');
+    const vendorFilter = document.getElementById('vendor-filter');
 
     // Global Data State 
     let currentHistoryData = [];
@@ -180,15 +182,59 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date(0);
     }
 
-    // 負責處理排序並呼叫 render
+    // 負責處理篩選、排序並呼叫 render
     function applySortingAndRender() {
         if (currentHistoryData.length === 0) {
             renderHistoryTable([]);
             return;
         }
 
+        // 1. 執行篩選 (Filter)
+        const agencyVal = agencyFilter ? agencyFilter.value : 'all';
+        const vendorVal = vendorFilter ? vendorFilter.value : 'all';
+
+        let filteredData = currentHistoryData.filter(row => {
+            let agencyMatch = true;
+            let vendorMatch = true;
+
+            const aAddr = row['機關地址'] || '';
+            const vAddr = row['廠商地址'] || '';
+
+            // 機關篩選
+            if (agencyVal !== 'all') {
+                if (agencyVal === 'taipei') {
+                    agencyMatch = aAddr.includes('台北') || aAddr.includes('臺北');
+                    // 排除新北市
+                    if (aAddr.includes('新北')) agencyMatch = false;
+                } else if (agencyVal === 'new_taipei') {
+                    agencyMatch = aAddr.includes('新北');
+                } else if (agencyVal === 'taoyuan') {
+                    agencyMatch = aAddr.includes('桃園');
+                } else if (agencyVal === 'other') {
+                    agencyMatch = !(aAddr.includes('台北') || aAddr.includes('臺北') || aAddr.includes('新北') || aAddr.includes('桃園'));
+                }
+            }
+
+            // 廠商篩選
+            if (vendorVal !== 'all') {
+                if (vendorVal === 'taipei') {
+                    vendorMatch = vAddr.includes('台北') || vAddr.includes('臺北');
+                    // 排除新北市
+                    if (vAddr.includes('新北')) vendorMatch = false;
+                } else if (vendorVal === 'new_taipei') {
+                    vendorMatch = vAddr.includes('新北');
+                } else if (vendorVal === 'taoyuan') {
+                    vendorMatch = vAddr.includes('桃園');
+                } else if (vendorVal === 'other') {
+                    vendorMatch = !(vAddr.includes('台北') || vAddr.includes('臺北') || vAddr.includes('新北') || vAddr.includes('桃園'));
+                }
+            }
+
+            return agencyMatch && vendorMatch;
+        });
+
         const sortValue = sortSelect.value;
-        let sortedData = [...currentHistoryData]; // 複製一份，避免改到原始順序
+        let sortedData = [...filteredData]; // 使用過濾後的資料進行排序
 
         // 若為 default 則不另外 sort，因為 records.reverse() 在後端已將最新排前面 (也就是抓取時間最新)
         if (sortValue !== 'default') {
@@ -234,6 +280,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 監聽選單變化
     if (sortSelect) {
         sortSelect.addEventListener('change', () => {
+            applySortingAndRender();
+        });
+    }
+
+    if (agencyFilter) {
+        agencyFilter.addEventListener('change', () => {
+            applySortingAndRender();
+        });
+    }
+
+    if (vendorFilter) {
+        vendorFilter.addEventListener('change', () => {
             applySortingAndRender();
         });
     }

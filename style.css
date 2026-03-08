@@ -389,18 +389,27 @@ tr:hover td {
     align-items: center;
 }
 
-.sort-container {
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sort-container,
+.filter-container {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.sort-container label {
+.sort-container label,
+.filter-container label {
     margin-bottom: 0;
     color: var(--text-secondary);
 }
 
-.sort-select {
+.custom-select {
     padding: 0.5rem 2rem 0.5rem 1rem;
     background-color: rgba(15, 23, 42, 0.8);
     color: var(--text-primary);
@@ -417,12 +426,12 @@ tr:hover td {
     transition: all 0.3s ease;
 }
 
-.sort-select:focus,
-.sort-select:hover {
+.custom-select:focus,
+.custom-select:hover {
     border-color: var(--accent-color);
 }
 
-.sort-select option {
+.custom-select option {
     background-color: var(--bg-color);
     color: var(--text-primary);
 }
