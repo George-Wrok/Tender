@@ -198,10 +198,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     let dateA = parseROCDate(a['公告日'] || a['公告日期']);
                     let dateB = parseROCDate(b['公告日'] || b['公告日期']);
                     return dateA - dateB;
-                } else if (sortValue === 'contract_date') {
-                    // 履約日期 (預設：最舊到最新 -> 遞增)
-                    let dateA = parseROCDate(a['履約起迄日期'] || a['履約日期']);
-                    let dateB = parseROCDate(b['履約起迄日期'] || b['履約日期']);
+                } else if (sortValue === 'start_date') {
+                    // 開始日 (預設：最舊到最新 -> 遞增)
+                    let dateA = parseROCDate(a['開始日'] || a['履約起迄日期'] || a['履約日期']);
+                    let dateB = parseROCDate(b['開始日'] || b['履約起迄日期'] || b['履約日期']);
+                    return dateA - dateB;
+                } else if (sortValue === 'end_date') {
+                    // 結束日 (預設：最舊到最新 -> 遞增)
+                    let dateA = parseROCDate(a['結束日'] || a['履約起迄日期'] || a['履約日期']);
+                    let dateB = parseROCDate(b['結束日'] || b['履約起迄日期'] || b['履約日期']);
                     return dateA - dateB;
                 } else if (sortValue === 'agency_address') {
                     // 機關地址 (預設：郵遞區號數字小到大 -> 遞增)
