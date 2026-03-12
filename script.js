@@ -32,6 +32,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // --- 軟性示警邏輯：檢查是否重複輸入 ---
+        const isDuplicate = currentHistoryData.some(row => {
+            const rowUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
+            return rowUrl === url;
+        });
+
+        if (isDuplicate) {
+            const confirmDuplicate = confirm('⚠️ 偵測到重複資料 ⚠️\n\n此標案網址已經存在於您的歷史紀錄中，您確定還要再存入一次嗎？');
+            if (!confirmDuplicate) {
+                return; // 使用者按下取消，停止執行
+            }
+        }
+        // ------------------------------------
+
         // 設置按鈕為載入狀態
         setLoadingState(true);
         hideStatus();
