@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
                     const val = typeof text === 'string' ? text.trim() : '';
                     tbodyHtml += `<td>
-                        <select class="contact-select custom-select" data-url="${tenderUrl}" style="width: auto; min-width: 75px; padding: 0.3rem 1.5rem 0.3rem 0.8rem;">
+                        <select class="contact-select custom-select" data-url="${tenderUrl}" style="padding: 0.3rem 1.8rem 0.3rem 0.8rem; min-width: 40px; white-space: nowrap;">
                             <option value="">-</option>
                             <option value="凱" ${val === '凱' ? 'selected' : ''}>凱</option>
                             <option value="娟" ${val === '娟' ? 'selected' : ''}>娟</option>
