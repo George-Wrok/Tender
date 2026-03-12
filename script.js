@@ -335,6 +335,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     tbodyHtml += `<td class="text-center">
                         <input type="checkbox" class="finish-checkbox" data-url="${tenderUrl}" title="標記為已結束">
                     </td>`;
+                } else if (header === '接觸') {
+                    const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
+                    const val = typeof text === 'string' ? text.trim() : '';
+                    tbodyHtml += `<td>
+                        <select class="contact-select custom-select" data-url="${tenderUrl}" style="padding: 0.2rem 1.5rem 0.2rem 0.5rem; width: 100%; max-width: 80px;">
+                            <option value="">-</option>
+                            <option value="凱" ${val === '凱' ? 'selected' : ''}>凱</option>
+                            <option value="娟" ${val === '娟' ? 'selected' : ''}>娟</option>
+                            <option value="喬" ${val === '喬' ? 'selected' : ''}>喬</option>
+                        </select>
+                    </td>`;
                 } else {
                     // 網址若為連結，可加上 a tag 處理
                     if (typeof text === 'string' && text.startsWith('http')) {
@@ -353,12 +364,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         historyBody.innerHTML = tbodyHtml;
 
-        // 重新綁定 Checkbox 的點擊事件
-        bindCheckboxEvents();
+        // 重新綁定 Checkbox 與 Select 的點擊事件
+        bindInteractiveEvents();
     }
 
-    // 綁定核取方塊的事件監聽器
-    function bindCheckboxEvents() {
+    // 綁定動態元素的事件監聽器
+    function bindInteractiveEvents() {
         const checkboxes = document.querySelectorAll('.finish-checkbox');
         checkboxes.forEach(box => {
             box.addEventListener('change', async function (e) {
@@ -416,6 +427,52 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 取消打勾狀態
                         this.checked = false;
                     }
+                }
+            });
+        });
+
+        const contactSelects = document.querySelectorAll('.contact-select');
+        contactSelects.forEach(select => {
+            select.addEventListener('change', async function () {
+                const urlToUpdate = this.getAttribute('data-url');
+                const contactValue = this.value;
+
+                if (!urlToUpdate) {
+                    alert('無法取得該筆標案網址，無法更新。');
+                    return;
+                }
+
+                try {
+                    // 禁用該選單避免重複操作
+                    this.disabled = true;
+                    showStatus('正在為您更新接觸人員至雲端試算表...', 'success');
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'action': 'update_contact',
+                            'url': urlToUpdate,
+                            'contact': contactValue
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        showStatus('接觸人員更新成功！', 'success');
+                        // 成功後自動重抓資料，確保畫面與雲端一致
+                        await fetchHistory();
+                    } else {
+                        alert(`更新失敗: ${result.message}`);
+                        this.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('更新接觸失敗:', error);
+                    alert('連線失敗，請稍後再試。');
+                    this.disabled = false;
                 }
             });
         });
