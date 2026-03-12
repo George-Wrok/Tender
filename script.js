@@ -210,8 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     agencyMatch = aAddr.includes('新北');
                 } else if (agencyVal === 'taoyuan') {
                     agencyMatch = aAddr.includes('桃園');
+                } else if (agencyVal === 'hsinchu') {
+                    agencyMatch = aAddr.includes('新竹');
                 } else if (agencyVal === 'other') {
-                    agencyMatch = !(aAddr.includes('台北') || aAddr.includes('臺北') || aAddr.includes('新北') || aAddr.includes('桃園'));
+                    agencyMatch = !(aAddr.includes('台北') || aAddr.includes('臺北') || aAddr.includes('新北') || aAddr.includes('桃園') || aAddr.includes('新竹'));
                 }
             }
 
@@ -225,8 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     vendorMatch = vAddr.includes('新北');
                 } else if (vendorVal === 'taoyuan') {
                     vendorMatch = vAddr.includes('桃園');
+                } else if (vendorVal === 'hsinchu') {
+                    vendorMatch = vAddr.includes('新竹');
                 } else if (vendorVal === 'other') {
-                    vendorMatch = !(vAddr.includes('台北') || vAddr.includes('臺北') || vAddr.includes('新北') || vAddr.includes('桃園'));
+                    vendorMatch = !(vAddr.includes('台北') || vAddr.includes('臺北') || vAddr.includes('新北') || vAddr.includes('桃園') || vAddr.includes('新竹'));
                 }
             }
 
