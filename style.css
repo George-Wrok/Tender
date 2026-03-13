@@ -436,6 +436,16 @@ tr:hover td {
     color: var(--text-primary);
 }
 
+/* 過期標案樣式 - 加強版 */
+.row-expired td {
+    color: #ff4d4d !important; /* 更鮮艷的紅色 */
+    font-weight: 500;
+}
+
+.row-expired td a {
+    color: #ff6666 !important;
+}
+
 .pulse-dot {
     display: inline-block;
     width: 10px;

@@ -71,6 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 成功後，自動更新下方的歷史紀錄總表
                 await fetchHistory();
 
+            } else if (result.status === 'captcha') {
+                // 處理驗證碼偵測
+                showStatus('⚠️ 偵測到採購網驗證機制', 'error');
+                alert('【偵測到驗證碼】\n\n由於連線過於頻繁，採購網目前要求手動驗證撲克牌。\n\n解決方法：\n1. 請先點開標案網址，手動完成撲克牌驗證。\n2. 驗證成功看到標案後，再回到這裡點擊抓取即可。');
+                
+                // 詢問是否要直接開啟該網址
+                if (confirm('是否要立刻開啟該標案網址進行驗證？')) {
+                    window.open(url, '_blank');
+                }
             } else {
                 showStatus(`錯誤：${result.message || '發生未知錯誤'}`, 'error');
             }
@@ -342,7 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // 跳過這一筆資料 (類似 continue)
             }
 
-            tbodyHtml += '<tr>';
+            // 判斷是否過期
+            const endDateText = row['結束日'] || row['履約起迄日期'] || '';
+            const endDate = parseROCDate(endDateText);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // 只比較日期，不比較時間
+            
+            const isExpired = endDate.getTime() !== 0 && endDate < today;
+
+            tbodyHtml += `<tr class="${isExpired ? 'row-expired' : ''}">`;
             headers.forEach(header => {
                 let text = row[header] || '';
 
