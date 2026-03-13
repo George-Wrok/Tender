@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyHead = document.getElementById('history-head');
     const historyBody = document.getElementById('history-body');
     const sortSelect = document.getElementById('sort-select');
+    const categoryFilter = document.getElementById('category-filter');
     const agencyFilter = document.getElementById('agency-filter');
     const vendorFilter = document.getElementById('vendor-filter');
 
@@ -213,15 +214,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 1. 執行篩選 (Filter)
+        const categoryVal = categoryFilter ? categoryFilter.value : 'all';
         const agencyVal = agencyFilter ? agencyFilter.value : 'all';
         const vendorVal = vendorFilter ? vendorFilter.value : 'all';
 
         let filteredData = currentHistoryData.filter(row => {
+            let categoryMatch = true;
             let agencyMatch = true;
             let vendorMatch = true;
 
+            const tName = row['標案名稱'] || '';
             const aAddr = row['機關地址'] || '';
             const vAddr = row['廠商地址'] || '';
+
+            // 類別篩選 (關鍵字比對標案名稱)
+            if (categoryVal !== 'all') {
+                if (categoryVal === 'reinforce') {
+                    categoryMatch = tName.includes('補強');
+                } else if (categoryVal === 'road') {
+                    categoryMatch = tName.includes('道路');
+                } else if (categoryVal === 'repair') {
+                    categoryMatch = tName.includes('修復');
+                } else if (categoryVal === 'waterproof') {
+                    categoryMatch = tName.includes('防水');
+                } else if (categoryVal === 'other') {
+                    categoryMatch = !(tName.includes('補強') || tName.includes('道路') || tName.includes('修復') || tName.includes('防水'));
+                }
+            }
 
             // 機關篩選
             if (agencyVal !== 'all') {
@@ -257,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            return agencyMatch && vendorMatch;
+            return categoryMatch && agencyMatch && vendorMatch;
         });
 
         const sortValue = sortSelect.value;
@@ -307,6 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 監聽選單變化
     if (sortSelect) {
         sortSelect.addEventListener('change', () => {
+            applySortingAndRender();
+        });
+    }
+
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', () => {
             applySortingAndRender();
         });
     }
