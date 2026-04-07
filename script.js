@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global Data State 
     let currentHistoryData = [];
+    let isScraping = false;
+    let scrapingAborted = false;
 
     // Google Apps Script Web App API URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMextf-2rnS1Hygj2nd18hKwvU5rT_i-qfP7B0Q0xCkq8s8Z1gDO5_jGYF9_t2G0Pp/exec';
@@ -26,6 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // 如果正在抓取中，點擊按鈕代表「停止」
+        if (isScraping) {
+            scrapingAborted = true;
+            setLoadingState(true, 0, true);
+            return;
+        }
+
         // 將輸入框內容按換行或空白切開，過濾掉空的字串
         const rawInput = urlInput.value.trim();
         if (!rawInput) {
@@ -33,39 +42,63 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const urls = rawInput.split(/[\n\r\s]+/).filter(u => u.trim().startsWith('http'));
+        // Q1 先進行初步分析
+        const allParsedUrls = rawInput.split(/[\n\r\s]+/).filter(u => u.trim().startsWith('http'));
+        const uniqueInputs = [...new Set(allParsedUrls)]; // 移除輸入內容本身重複的部分
 
-        if (urls.length === 0) {
+        if (uniqueInputs.length === 0) {
             showStatus('找不到有效的網址 (需以 http 開頭)', 'error');
             return;
         }
 
-        // 設置按鈕為載入狀態
-        setLoadingState(true, urls.length);
-        hideStatus();
+        // 過濾已存在於歷史紀錄中的網址 (防呆)
+        const urlsToProcess = [];
+        const duplicates = [];
 
-        let successCount = 0;
-        let skipCount = 0;
-        let errorCount = 0;
-
-        for (let i = 0; i < urls.length; i++) {
-            const url = urls[i];
-            const progress = `[${i + 1}/${urls.length}]`;
-            
-            showStatus(`${progress} 正在處理：${url}`, 'success');
-
-            // --- 軟性示警邏輯：檢查是否重複輸入 ---
+        uniqueInputs.forEach(url => {
             const isDuplicate = currentHistoryData.some(row => {
                 const rowUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
                 return rowUrl === url;
             });
-
             if (isDuplicate) {
-                // 如果是多筆模式，重複的就直接跳過，不彈窗（避免打斷自動化）
-                console.log(`跳過重複網址: ${url}`);
-                skipCount++;
-                continue;
+                duplicates.push(url);
+            } else {
+                urlsToProcess.push(url);
             }
+        });
+
+        if (urlsToProcess.length === 0 && duplicates.length > 0) {
+            showStatus(`所有網址 (${duplicates.length} 筆) 皆已抓取過，請勿重複提交。`, 'error');
+            return;
+        }
+
+        // 若有部分重複，給予提示
+        if (duplicates.length > 0) {
+            const confirmProcess = confirm(`發現 ${duplicates.length} 筆網址已在紀錄中，將自動過濾。\n剩餘 ${urlsToProcess.length} 筆新網址準備抓取。\n\n是否繼續？`);
+            if (!confirmProcess) return;
+        }
+
+        // 設置狀態
+        isScraping = true;
+        scrapingAborted = false;
+        setLoadingState(true, urlsToProcess.length);
+        hideStatus();
+
+        let successCount = 0;
+        let skipCount = duplicates.length; // 預設跳過的筆數
+        let errorCount = 0;
+
+        for (let i = 0; i < urlsToProcess.length; i++) {
+            // Q2: 檢查是否點擊了停止
+            if (scrapingAborted) {
+                console.log('使用者中斷抓取');
+                break;
+            }
+
+            const url = urlsToProcess[i];
+            const progress = `[${i + 1}/${urlsToProcess.length}]`;
+            
+            showStatus(`${progress} 正在處理：${url}`, 'success');
 
             try {
                 // 發送請求到 Google Apps Script
@@ -103,9 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`${progress} API 請求失敗:`, error);
             }
 
-            // 如果還有下一筆，等待 10 秒
-            if (i < urls.length - 1) {
+            // 如果還有下一筆，且尚未中斷，等待 10 秒
+            if (i < urlsToProcess.length - 1 && !scrapingAborted) {
                 for (let seconds = 10; seconds > 0; seconds--) {
+                    if (scrapingAborted) break;
                     showStatus(`${progress} 成功，等待 ${seconds} 秒後處理下一筆...`, 'success');
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -113,21 +147,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 結束後的最終狀態
+        isScraping = false;
         setLoadingState(false);
-        showStatus(`處理完成！成功: ${successCount} 筆, 跳過重複: ${skipCount} 筆, 失敗: ${errorCount} 筆。`, successCount > 0 ? 'success' : 'error');
+
+        if (scrapingAborted) {
+            showStatus(`抓取已中斷。目前進度: 成功 ${successCount} 筆, 失敗 ${errorCount} 筆。`, 'error');
+        } else {
+            showStatus(`處理完成！成功: ${successCount} 筆, 跳過重複: ${skipCount} 筆, 失敗: ${errorCount} 筆。`, successCount > 0 ? 'success' : 'error');
+        }
         
         if (successCount > 0) {
             urlInput.value = ''; // 清空輸入框
         }
     });
 
-    function setLoadingState(isLoading, totalCount = 0) {
+    function setLoadingState(isLoading, totalCount = 0, isStopping = false) {
         if (isLoading) {
-            submitBtn.disabled = true;
-            btnText.textContent = totalCount > 1 ? `批量抓取中 (共 ${totalCount} 筆)...` : '單筆抓取中...';
+            // submitBtn.disabled = true; // 不再禁用，讓它可以被點擊觸發停止
+            submitBtn.classList.add('btn-stop');
+            
+            if (isStopping) {
+                submitBtn.disabled = true;
+                btnText.textContent = '中斷中，請稍候...';
+            } else {
+                btnText.textContent = totalCount > 1 ? `停止批量抓取 (共 ${totalCount} 筆)...` : '停止抓取...';
+            }
             btnLoader.classList.remove('loader-hidden');
         } else {
             submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-stop');
             btnText.textContent = '一鍵抓取並寫入';
             btnLoader.classList.add('loader-hidden');
         }
