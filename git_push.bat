@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 > nul
 :: 先從雲端抓取更新
 git pull origin main
 git add .

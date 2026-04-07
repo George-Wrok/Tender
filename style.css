@@ -117,22 +117,20 @@ h1 {
 /* Form Styles */
 #scraper-form {
     display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 1.2rem;
     margin-bottom: 2rem;
 }
 
 #scraper-form .input-group {
-    flex: 1;
+    width: 100%;
     margin-bottom: 0;
 }
 
 #scraper-form .btn-primary {
-    width: auto;
-    height: 52px;
-    white-space: nowrap;
-    padding: 0 1.5rem;
+    width: 100%;
+    height: 58px;
+    font-size: 1.1rem;
 }
 
 .input-group {
@@ -148,10 +146,9 @@ label {
     margin-bottom: 0.5rem;
 }
 
-input[type="url"] {
+textarea#tender-url {
     width: 100%;
-    height: 52px;
-    padding: 0 1.25rem;
+    padding: 1rem 1.25rem;
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid var(--panel-border);
     border-radius: 12px;
@@ -159,13 +156,15 @@ input[type="url"] {
     font-size: 1rem;
     outline: none;
     transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 100px;
 }
 
-input[type="url"]::placeholder {
+textarea#tender-url::placeholder {
     color: #475569;
 }
 
-input[type="url"]:focus {
+textarea#tender-url:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px var(--accent-glow);
     background: rgba(15, 23, 42, 0.9);
@@ -246,6 +245,21 @@ input[type="url"]:focus {
         stroke-dasharray: 90, 150;
         stroke-dashoffset: -124;
     }
+}
+
+/* Hyperlinks in table */
+.tender-link {
+    color: #60a5fa; /* 亮天藍色，極致對比度 */
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.tender-link:hover {
+    color: #93c5fd; /* 移入時更亮 */
+    border-bottom: 1px solid #93c5fd;
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
 }
 
 /* Status Notifications */

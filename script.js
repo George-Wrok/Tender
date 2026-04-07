@@ -26,84 +26,105 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const url = urlInput.value.trim();
-
-        if (!url) {
+        // 將輸入框內容按換行或空白切開，過濾掉空的字串
+        const rawInput = urlInput.value.trim();
+        if (!rawInput) {
             showStatus('請輸入有效的網址', 'error');
             return;
         }
 
-        // --- 軟性示警邏輯：檢查是否重複輸入 ---
-        const isDuplicate = currentHistoryData.some(row => {
-            const rowUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
-            return rowUrl === url;
-        });
+        const urls = rawInput.split(/[\n\r\s]+/).filter(u => u.trim().startsWith('http'));
 
-        if (isDuplicate) {
-            const confirmDuplicate = confirm('⚠️ 偵測到重複資料 ⚠️\n\n此標案網址已經存在於您的歷史紀錄中，您確定還要再存入一次嗎？');
-            if (!confirmDuplicate) {
-                return; // 使用者按下取消，停止執行
-            }
+        if (urls.length === 0) {
+            showStatus('找不到有效的網址 (需以 http 開頭)', 'error');
+            return;
         }
-        // ------------------------------------
 
         // 設置按鈕為載入狀態
-        setLoadingState(true);
+        setLoadingState(true, urls.length);
         hideStatus();
 
-        try {
-            // 發送請求到 Google Apps Script
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    'url': url
-                })
+        let successCount = 0;
+        let skipCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            const progress = `[${i + 1}/${urls.length}]`;
+            
+            showStatus(`${progress} 正在處理：${url}`, 'success');
+
+            // --- 軟性示警邏輯：檢查是否重複輸入 ---
+            const isDuplicate = currentHistoryData.some(row => {
+                const rowUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
+                return rowUrl === url;
             });
 
-            const result = await response.json();
+            if (isDuplicate) {
+                // 如果是多筆模式，重複的就直接跳過，不彈窗（避免打斷自動化）
+                console.log(`跳過重複網址: ${url}`);
+                skipCount++;
+                continue;
+            }
 
-            if (result.status === 'success') {
-                showStatus('成功！資料已匯入您的試算表。', 'success');
-                urlInput.value = ''; // 清空輸入框
+            try {
+                // 發送請求到 Google Apps Script
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'url': url
+                    })
+                });
 
-                // 成功後，自動更新下方的歷史紀錄總表
-                await fetchHistory();
+                const result = await response.json();
 
-            } else if (result.status === 'captcha') {
-                // 處理驗證碼偵測
-                showStatus('⚠️ 偵測到採購網驗證機制', 'error');
-                alert('【偵測到驗證碼】\n\n由於連線過於頻繁，採購網目前要求手動驗證撲克牌。\n\n解決方法：\n1. 請先點開標案網址，手動完成撲克牌驗證。\n2. 驗證成功看到標案後，再回到這裡點擊抓取即可。');
-                
-                // 詢問是否要直接開啟該網址
-                if (confirm('是否要立刻開啟該標案網址進行驗證？')) {
-                    window.open(url, '_blank');
+                if (result.status === 'success') {
+                    successCount++;
+                    // 每次成功後，更新下方的歷史紀錄總表 (讓使用者看到進度)
+                    await fetchHistory();
+                } else if (result.status === 'captcha') {
+                    errorCount++;
+                    showStatus(`${progress} ⚠️ 偵測到驗證碼，請手動處理`, 'error');
+                    alert(`【偵測到驗證碼】\n\n網址：${url}\n\n為避免後續全部失敗，建議先完成驗證再繼續。`);
+                    if (confirm('是否要立刻開啟該網址進行驗證？')) {
+                        window.open(url, '_blank');
+                    }
+                    break; // 偵測到驗證碼通常建議停止，否則後面都會失敗
+                } else {
+                    errorCount++;
+                    console.error(`${progress} 錯誤：${result.message}`);
                 }
-            } else {
-                showStatus(`錯誤：${result.message || '發生未知錯誤'}`, 'error');
+
+            } catch (error) {
+                errorCount++;
+                console.error(`${progress} API 請求失敗:`, error);
             }
 
-        } catch (error) {
-            console.error('API 請求失敗:', error);
-
-            // 若為跨域問題，提供備用說明
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                showStatus('無法連線至 API。可能是跨域資源共用 (CORS) 問題，請確認 GAS 腳本已重新部署為「所有人」皆可存取。', 'error');
-            } else {
-                showStatus(`錯誤：連線失敗或伺服器無回應`, 'error');
+            // 如果還有下一筆，等待 10 秒
+            if (i < urls.length - 1) {
+                for (let seconds = 10; seconds > 0; seconds--) {
+                    showStatus(`${progress} 成功，等待 ${seconds} 秒後處理下一筆...`, 'success');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
-        } finally {
-            // 恢復按鈕狀態
-            setLoadingState(false);
+        }
+
+        // 結束後的最終狀態
+        setLoadingState(false);
+        showStatus(`處理完成！成功: ${successCount} 筆, 跳過重複: ${skipCount} 筆, 失敗: ${errorCount} 筆。`, successCount > 0 ? 'success' : 'error');
+        
+        if (successCount > 0) {
+            urlInput.value = ''; // 清空輸入框
         }
     });
 
-    function setLoadingState(isLoading) {
+    function setLoadingState(isLoading, totalCount = 0) {
         if (isLoading) {
             submitBtn.disabled = true;
-            btnText.textContent = '抓取中...';
+            btnText.textContent = totalCount > 1 ? `批量抓取中 (共 ${totalCount} 筆)...` : '單筆抓取中...';
             btnLoader.classList.remove('loader-hidden');
         } else {
             submitBtn.disabled = false;
@@ -357,7 +378,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 第一筆資料的 Keys 當作標題
-        const headers = Object.keys(dataArray[0]);
+        const allHeaders = Object.keys(dataArray[0]);
+        // ★ 新增邏輯：隱藏網址類的欄位，因為要合併到標案名稱中
+        const urlFieldNames = ['招標網站', '招標網址', '網址', '連結網址', '原網址'];
+        const headers = allHeaders.filter(h => !urlFieldNames.includes(h));
 
         // 生成 Thead
         let theadHtml = '<tr>';
@@ -387,16 +411,15 @@ document.addEventListener('DOMContentLoaded', () => {
             tbodyHtml += `<tr class="${isExpired ? 'row-expired' : ''}">`;
             headers.forEach(header => {
                 let text = row[header] || '';
+                const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
 
                 // 處理特殊欄位顯示
                 if (header === '結束') {
                     // 若是結束欄位，且值為 FALSE，則顯示一個可點擊的核取方塊
-                    const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
                     tbodyHtml += `<td class="text-center">
                         <input type="checkbox" class="finish-checkbox" data-url="${tenderUrl}" title="標記為已結束">
                     </td>`;
                 } else if (header === '接觸') {
-                    const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
                     const val = typeof text === 'string' ? text.trim() : '';
                     tbodyHtml += `<td>
                         <select class="contact-select custom-select" data-url="${tenderUrl}" style="padding: 0.3rem 1.8rem 0.3rem 0.8rem; min-width: 40px; white-space: nowrap;">
@@ -406,8 +429,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="喬" ${val === '喬' ? 'selected' : ''}>喬</option>
                         </select>
                     </td>`;
+                } else if (header === '標案名稱') {
+                    // ★ 新增邏輯：將網址點入標案名稱中
+                    text = `<a href="${tenderUrl}" target="_blank" class="tender-link">${text}</a>`;
+                    tbodyHtml += `<td>${text}</td>`;
                 } else {
-                    // 網址若為連結，可加上 a tag 處理
+                    // 網址若為連結，可加上 a tag 處理 (雖然現在隱藏了，但保留邏輯以防萬一)
                     if (typeof text === 'string' && text.startsWith('http')) {
                         text = `<a href="${text}" target="_blank" style="color:var(--accent-color)">連結</a>`;
                     }
