@@ -254,52 +254,84 @@ document.addEventListener('DOMContentLoaded', () => {
             html: "<div style='background-color:#10b981; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);'></div>",
             iconSize: [14, 14],
             iconAnchor: [7, 7]
-        });
+        });        const showType = markerTypeFilter ? markerTypeFilter.value : 'all';
+        const groupedData = new Map(); // key: "lat|lng" -> items[]
 
-        const showType = markerTypeFilter ? markerTypeFilter.value : 'all'; // 'all' | 'agency' | 'vendor'
-
+        // 1. 資料分組處理
         dataArray.forEach(row => {
-            const tenderName = row['標案名稱'] || '未命名標案';
-            const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || '';
-            const popupContent = `
-                <div style="min-width:150px">
-                    <strong>${tenderName}</strong><br>
-                    <small>公告日: ${row['公告日'] || '-'}</small><hr style="margin:5px 0; opacity:0.2">
-                    機關: ${row['機關名稱'] || '-'}<br>
-                    得標廠商: ${row['得標廠商'] || '-'}<br>
-                    <a href="${tenderUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-weight:bold">開啟網址 ↗</a>
-                </div>
-            `;
-
-            // 機關標記 (判斷是否顯示)
+            // 機關點
             if (showType === 'all' || showType === 'agency') {
                 const aLat = parseFloat(String(row['機關地址緯度'] || '').trim());
                 const aLng = parseFloat(String(row['機關地址經度'] || '').trim());
-                
                 if (!isNaN(aLat) && !isNaN(aLng) && aLat !== 0) {
-                    L.marker([aLat, aLng], {icon: agencyIcon})
-                        .bindPopup(popupContent + `<br><span style="color:#94a3b8">🏢 機關地址: ${row['機關地址']}</span>`)
-                        .addTo(markersGroup);
+                    const key = `${aLat.toFixed(6)}|${aLng.toFixed(6)}`;
+                    if (!groupedData.has(key)) groupedData.set(key, []);
+                    groupedData.get(key).push({ type: 'agency', data: row });
                 }
             }
-
-            // 廠商標記 (判斷是否顯示)
+            // 廠商點
             if (showType === 'all' || showType === 'vendor') {
                 const vLat = parseFloat(String(row['廠商地址緯度'] || '').trim());
                 const vLng = parseFloat(String(row['廠商地址經度'] || '').trim());
-                
                 if (!isNaN(vLat) && !isNaN(vLng) && vLat !== 0) {
-                    L.marker([vLat, vLng], {icon: vendorIcon})
-                        .bindPopup(popupContent + `<br><span style="color:#10b981">🏗️ 廠商地址: ${row['廠商地址']}</span>`)
-                        .addTo(markersGroup);
+                    const key = `${vLat.toFixed(6)}|${vLng.toFixed(6)}`;
+                    if (!groupedData.has(key)) groupedData.set(key, []);
+                    groupedData.get(key).push({ type: 'vendor', data: row });
                 }
             }
         });
 
-        // 如果只有少數點，自動調整縮放
-        if (dataArray.length > 0 && dataArray.length < 50) {
+        // 2. 繪製標記
+        groupedData.forEach((items, key) => {
+            const [lat, lng] = key.split('|').map(Number);
+            const count = items.length;
+            
+            // 決定主要樣式
+            const mainType = items[0].type;
+            const size = count > 1 ? 20 : 14;
+            const glowColor = mainType === 'agency' ? 'rgba(239, 68, 68, 0.6)' : 'rgba(16, 185, 129, 0.6)';
+            const bgColor = mainType === 'agency' ? '#ef4444' : '#10b981';
+
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:${bgColor}; width:${size}px; height:${size}px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 15px ${glowColor}; display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:bold; font-family:sans-serif;">${count > 1 ? count : ''}</div>`,
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2]
+            });
+
+            // 組合 Popup 內容
+            let popupHtml = `<div style="max-height:300px; overflow-y:auto; min-width:220px; font-family: sans-serif; padding-right:5px;">`;
+            popupHtml += `<div style="margin-bottom:10px; border-bottom:2px solid #f1f5f9; padding-bottom:6px;"><strong>📍 該地點共有 ${count} 個案件</strong></div>`;
+            
+            items.forEach((item, idx) => {
+                const row = item.data;
+                const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || '#';
+                popupHtml += `
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; margin-bottom:4px;">
+                            <span style="background:${item.type === 'agency' ? '#fee2e2' : '#dcfce7'}; color:${item.type === 'agency' ? '#b91c1c' : '#15803d'}; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:6px;">${item.type === 'agency' ? '機關' : '廠商'}</span>
+                            <span style="color:#64748b; font-size:11px;">${row['公告日'] || '-'}</span>
+                        </div>
+                        <div style="font-weight:bold; color:#1e293b; margin-bottom:4px; line-height:1.4;">${row['標案名稱']}</div>
+                        <div style="font-size:12px; color:#475569; margin-bottom:4px;">得標: ${row['得標廠商'] || '-'}</div>
+                        <a href="${tenderUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-size:12px; font-weight:bold;">查看招標細節 ↗</a>
+                    </div>
+                    ${idx < items.length - 1 ? '<hr style="margin:10px 0; border:0; border-top:1px solid #f1f5f9;">' : ''}
+                `;
+            });
+            popupHtml += `</div>`;
+
+            L.marker([lat, lng], {icon: customIcon})
+                .bindPopup(popupHtml)
+                .addTo(markersGroup);
+        });
+
+        // 3. 自動調整縮放
+        if (groupedData.size > 0 && groupedData.size < 50) {
             const allCoords = [];
-            markersGroup.eachLayer(marker => allCoords.push(marker.getLatLng()));
+            markersGroup.eachLayer(marker => {
+                if(marker.getLatLng) allCoords.push(marker.getLatLng());
+            });
             if (allCoords.length > 0) {
                 const bounds = L.latLngBounds(allCoords);
                 map.fitBounds(bounds, {padding: [50, 50]});
