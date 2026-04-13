@@ -233,6 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!map || !markersGroup) return;
         markersGroup.clearLayers();
 
+        if (dataArray && dataArray.length > 0) {
+            console.log('--- 地圖資料除錯 ---');
+            console.log('第一筆資料的欄位名稱 (Keys):', Object.keys(dataArray[0]));
+            // 隨機選一筆印出看詳情
+            console.log('範例資料:', dataArray[0]);
+        }
+
         const agencyIcon = L.divIcon({
             className: 'custom-div-icon',
             html: "<div style='background-color:#ef4444; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);'></div>",
