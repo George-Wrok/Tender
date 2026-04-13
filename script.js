@@ -235,12 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!map || !markersGroup) return;
         markersGroup.clearLayers();
 
-        if (dataArray && dataArray.length > 0) {
-            console.log('--- 地圖資料除錯 ---');
-            console.log('第一筆資料的欄位名稱 (Keys):', Object.keys(dataArray[0]));
-            // 隨機選一筆印出看詳情
-            console.log('範例資料:', dataArray[0]);
-        }
+
 
         const agencyIcon = L.divIcon({
             className: 'custom-div-icon',
@@ -305,18 +300,37 @@ document.addEventListener('DOMContentLoaded', () => {
             
             items.forEach((item, idx) => {
                 const row = item.data;
+                const isAgency = item.type === 'agency';
                 const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || '#';
+                
+                // 動態判斷名稱與地址
+                const displayName = isAgency ? (row['機關名稱'] || '未知機關') : (row['得標廠商'] || '未知廠商');
+                const displayAddr = isAgency ? row['機關地址'] : row['廠商地址'];
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(displayAddr)}`;
+                
                 popupHtml += `
                     <div style="margin-bottom:12px;">
                         <div style="display:flex; align-items:center; margin-bottom:4px;">
-                            <span style="background:${item.type === 'agency' ? '#fee2e2' : '#dcfce7'}; color:${item.type === 'agency' ? '#b91c1c' : '#15803d'}; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:6px;">${item.type === 'agency' ? '機關' : '廠商'}</span>
-                            <span style="color:#64748b; font-size:11px;">${row['公告日'] || '-'}</span>
+                            <span style="background:${isAgency ? '#fee2e2' : '#dcfce7'}; color:${isAgency ? '#b91c1c' : '#15803d'}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:8px;">${isAgency ? '機關' : '廠商'}</span>
+                            <span style="font-weight:700; color:#334155; font-size:13px;">${displayName}</span>
                         </div>
-                        <div style="font-weight:bold; color:#1e293b; margin-bottom:4px; line-height:1.4;">${row['標案名稱']}</div>
-                        <div style="font-size:12px; color:#475569; margin-bottom:4px;">得標: ${row['得標廠商'] || '-'}</div>
-                        <a href="${tenderUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-size:12px; font-weight:bold;">查看招標細節 ↗</a>
+                        <div style="color:#64748b; font-size:11px; margin-bottom:4px; display:flex; gap:10px;">
+                            <span>📅 公告: ${row['公告日'] || '-'}</span>
+                            <span>⏱️ 到期: ${row['結束日'] || '-'}</span>
+                        </div>
+                        <div style="font-weight:bold; color:#1e293b; margin-bottom:6px; line-height:1.4; font-size:14px;">${row['標案名稱']}</div>
+                        
+                        <div style="margin-bottom:8px;">
+                            <a href="${googleMapsUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-size:12px; display:inline-block; background:#f0f7ff; padding:4px 8px; border-radius:4px; border:1px solid #dbeafe;">
+                                📍 ${displayAddr} <span style="font-size:10px;">(導航 ↗)</span>
+                            </a>
+                        </div>
+                        
+                        <a href="${tenderUrl}" target="_blank" style="color:#475569; text-decoration:underline; font-size:12px; font-weight:600;">
+                            🔗 查看招標原始網頁 ↗
+                        </a>
                     </div>
-                    ${idx < items.length - 1 ? '<hr style="margin:10px 0; border:0; border-top:1px solid #f1f5f9;">' : ''}
+                    ${idx < items.length - 1 ? '<hr style="margin:12px 0; border:0; border-top:2px solid #f1f5f9;">' : ''}
                 `;
             });
             popupHtml += `</div>`;
