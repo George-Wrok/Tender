@@ -527,6 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const vendorVal = vendorFilter ? vendorFilter.value : 'all';
 
         let filteredData = currentHistoryData.filter(row => {
+            // ★ 新增邏輯：如果在「結束」欄位打勾 (值為 "TRUE" 或 true)，則不顯示 (包含表格與地圖)
+            const isFinished = row['結束'] === 'TRUE' || row['結束'] === true;
+            if (isFinished) return false;
+
             let categoryMatch = true;
             let agencyMatch = true;
             let vendorMatch = true;
@@ -684,12 +688,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 生成 Tbody
         let tbodyHtml = '';
         dataArray.forEach(row => {
-            // ★ 新增邏輯：如果在「結束」欄位打勾 (值為 "TRUE" 或 true)，則不要顯示該筆資料
-            const isFinished = row['結束'] === 'TRUE' || row['結束'] === true;
-            if (isFinished) {
-                return; // 跳過這一筆資料 (類似 continue)
-            }
-
             // 判斷是否過期
             const endDateText = row['結束日'] || row['履約起迄日期'] || '';
             const endDate = parseROCDate(endDateText);
