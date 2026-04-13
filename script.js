@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mapControls = document.getElementById('map-controls');
     const listControls = document.querySelectorAll('.list-controls');
     const getLocationBtn = document.getElementById('get-location-btn');
-    const distanceFilter = document.getElementById('distance-filter');
     const markerTypeFilter = document.getElementById('marker-type-filter');
 
     // Global Data State 
@@ -183,7 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewListBtn) viewListBtn.addEventListener('click', () => switchView('list'));
     if (viewMapBtn) viewMapBtn.addEventListener('click', () => switchView('map'));
     if (getLocationBtn) getLocationBtn.addEventListener('click', getUserLocation);
-    if (distanceFilter) distanceFilter.addEventListener('change', () => applySortingAndRender());
     if (markerTypeFilter) markerTypeFilter.addEventListener('change', () => applySortingAndRender());
 
     function switchView(view) {
@@ -589,22 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return categoryMatch && agencyMatch && vendorMatch;
         });
 
-        // 2. 執行距離篩選 (如果用戶有定位)
-        const maxDist = distanceFilter ? distanceFilter.value : 'all';
-        if (maxDist !== 'all' && userCoords) {
-            filteredData = filteredData.filter(row => {
-                const aLat = parseFloat(row['機關地址緯度']);
-                const aLng = parseFloat(row['機關地址經度']);
-                const vLat = parseFloat(row['廠商地址緯度']);
-                const vLng = parseFloat(row['廠商地址經度']);
-                
-                let aDist = Infinity, vDist = Infinity;
-                if (!isNaN(aLat)) aDist = getDistance(userCoords.lat, userCoords.lng, aLat, aLng);
-                if (!isNaN(vLat)) vDist = getDistance(userCoords.lat, userCoords.lng, vLat, vLng);
-                
-                return aDist <= parseFloat(maxDist) || vDist <= parseFloat(maxDist);
-            });
-        }
+
 
         const sortValue = sortSelect.value;
         let sortedData = [...filteredData]; // 使用過濾後的資料進行排序
