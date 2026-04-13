@@ -14,6 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const agencyFilter = document.getElementById('agency-filter');
     const vendorFilter = document.getElementById('vendor-filter');
 
+    // Map & View Elements
+    const viewListBtn = document.getElementById('view-list-btn');
+    const viewMapBtn = document.getElementById('view-map-btn');
+    const mapWrapper = document.getElementById('map-wrapper');
+    const historyWrapper = document.querySelector('.history-wrapper');
+    const mapControls = document.getElementById('map-controls');
+    const listControls = document.querySelectorAll('.list-controls');
+    const getLocationBtn = document.getElementById('get-location-btn');
+    const distanceFilter = document.getElementById('distance-filter');
+
     // Global Data State 
     let currentHistoryData = [];
     let isScraping = false;
@@ -169,19 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 地圖與切換按鈕事件 ---
-    const viewListBtn = document.getElementById('view-list-btn');
-    const viewMapBtn = document.getElementById('view-map-btn');
-    const mapWrapper = document.getElementById('map-wrapper');
-    const historyWrapper = document.querySelector('.history-wrapper');
-    const mapControls = document.getElementById('map-controls');
-    const listControls = document.querySelectorAll('.list-controls');
-    const getLocationBtn = document.getElementById('get-location-btn');
-    const distanceFilter = document.getElementById('distance-filter');
-
-    viewListBtn.addEventListener('click', () => switchView('list'));
-    viewMapBtn.addEventListener('click', () => switchView('map'));
-    getLocationBtn.addEventListener('click', getUserLocation);
-    distanceFilter.addEventListener('change', () => applySortingAndRender());
+    if (viewListBtn) viewListBtn.addEventListener('click', () => switchView('list'));
+    if (viewMapBtn) viewMapBtn.addEventListener('click', () => switchView('map'));
+    if (getLocationBtn) getLocationBtn.addEventListener('click', getUserLocation);
+    if (distanceFilter) distanceFilter.addEventListener('change', () => applySortingAndRender());
 
     function switchView(view) {
         currentView = view;
