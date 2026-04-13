@@ -235,16 +235,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const agencyIcon = L.divIcon({
             className: 'custom-div-icon',
-            html: "<div style='background-color:#ef4444; width:12px; height:12px; border-radius:50%; border:2px solid white;'></div>",
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            html: "<div style='background-color:#ef4444; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);'></div>",
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
         });
 
         const vendorIcon = L.divIcon({
             className: 'custom-div-icon',
-            html: "<div style='background-color:#10b981; width:12px; height:12px; border-radius:50%; border:2px solid white;'></div>",
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            html: "<div style='background-color:#10b981; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);'></div>",
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
         });
 
         dataArray.forEach(row => {
