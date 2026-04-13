@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const listControls = document.querySelectorAll('.list-controls');
     const getLocationBtn = document.getElementById('get-location-btn');
     const distanceFilter = document.getElementById('distance-filter');
+    const markerTypeFilter = document.getElementById('marker-type-filter');
 
     // Global Data State 
     let currentHistoryData = [];
@@ -183,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewMapBtn) viewMapBtn.addEventListener('click', () => switchView('map'));
     if (getLocationBtn) getLocationBtn.addEventListener('click', getUserLocation);
     if (distanceFilter) distanceFilter.addEventListener('change', () => applySortingAndRender());
+    if (markerTypeFilter) markerTypeFilter.addEventListener('change', () => applySortingAndRender());
 
     function switchView(view) {
         currentView = view;
@@ -254,6 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             iconAnchor: [7, 7]
         });
 
+        const showType = markerTypeFilter ? markerTypeFilter.value : 'all'; // 'all' | 'agency' | 'vendor'
+
         dataArray.forEach(row => {
             const tenderName = row['標案名稱'] || '未命名標案';
             const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || '';
@@ -267,26 +271,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // 機關標記
-            const aLat = parseFloat(String(row['機關地址緯度'] || '').trim());
-            const aLng = parseFloat(String(row['機關地址經度'] || '').trim());
-            
-            if (!isNaN(aLat) && !isNaN(aLng) && aLat !== 0) {
-                console.log(`正在標記機關: ${row['機關名稱']}, 座標: ${aLat}, ${aLng}`);
-                L.marker([aLat, aLng], {icon: agencyIcon})
-                    .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 機關地址: ${row['機關地址']}</span>`)
-                    .addTo(markersGroup);
+            // 機關標記 (判斷是否顯示)
+            if (showType === 'all' || showType === 'agency') {
+                const aLat = parseFloat(String(row['機關地址緯度'] || '').trim());
+                const aLng = parseFloat(String(row['機關地址經度'] || '').trim());
+                
+                if (!isNaN(aLat) && !isNaN(aLng) && aLat !== 0) {
+                    L.marker([aLat, aLng], {icon: agencyIcon})
+                        .bindPopup(popupContent + `<br><span style="color:#94a3b8">🏢 機關地址: ${row['機關地址']}</span>`)
+                        .addTo(markersGroup);
+                }
             }
 
-            // 廠商標記
-            const vLat = parseFloat(String(row['廠商地址緯度'] || '').trim());
-            const vLng = parseFloat(String(row['廠商地址經度'] || '').trim());
-            
-            if (!isNaN(vLat) && !isNaN(vLng) && vLat !== 0) {
-                console.log(`正在標記廠商: ${row['得標廠商']}, 座標: ${vLat}, ${vLng}`);
-                L.marker([vLat, vLng], {icon: vendorIcon})
-                    .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 廠商地址: ${row['廠商地址']}</span>`)
-                    .addTo(markersGroup);
+            // 廠商標記 (判斷是否顯示)
+            if (showType === 'all' || showType === 'vendor') {
+                const vLat = parseFloat(String(row['廠商地址緯度'] || '').trim());
+                const vLng = parseFloat(String(row['廠商地址經度'] || '').trim());
+                
+                if (!isNaN(vLat) && !isNaN(vLng) && vLat !== 0) {
+                    L.marker([vLat, vLng], {icon: vendorIcon})
+                        .bindPopup(popupContent + `<br><span style="color:#10b981">🏗️ 廠商地址: ${row['廠商地址']}</span>`)
+                        .addTo(markersGroup);
+                }
             }
         });
 
