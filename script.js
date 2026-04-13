@@ -260,18 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             // 機關標記
-            const aLat = parseFloat(row['機關地址緯度']);
-            const aLng = parseFloat(row['機關地址經度']);
-            if (!isNaN(aLat) && !isNaN(aLng)) {
+            const aLat = parseFloat(String(row['機關地址緯度'] || '').trim());
+            const aLng = parseFloat(String(row['機關地址經度'] || '').trim());
+            
+            if (!isNaN(aLat) && !isNaN(aLng) && aLat !== 0) {
+                console.log(`正在標記機關: ${row['機關名稱']}, 座標: ${aLat}, ${aLng}`);
                 L.marker([aLat, aLng], {icon: agencyIcon})
                     .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 機關地址: ${row['機關地址']}</span>`)
                     .addTo(markersGroup);
             }
 
             // 廠商標記
-            const vLat = parseFloat(row['廠商地址緯度']);
-            const vLng = parseFloat(row['廠商地址經度']);
-            if (!isNaN(vLat) && !isNaN(vLng)) {
+            const vLat = parseFloat(String(row['廠商地址緯度'] || '').trim());
+            const vLng = parseFloat(String(row['廠商地址經度'] || '').trim());
+            
+            if (!isNaN(vLat) && !isNaN(vLng) && vLat !== 0) {
+                console.log(`正在標記廠商: ${row['得標廠商']}, 座標: ${vLat}, ${vLng}`);
                 L.marker([vLat, vLng], {icon: vendorIcon})
                     .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 廠商地址: ${row['廠商地址']}</span>`)
                     .addTo(markersGroup);
