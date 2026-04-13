@@ -7,7 +7,9 @@
     <title>招標網資料自動抓取器</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 
 <body>
@@ -20,6 +22,10 @@
         <header>
             <h1>招標網資料抓取器</h1>
             <p class="subtitle">輸入招標網址，系統將自動解析並寫入您的Google試算表</p>
+            <div class="view-switch">
+                <button id="view-list-btn" class="switch-btn active">📋 資料列表</button>
+                <button id="view-map-btn" class="switch-btn">🗺️ 地圖模式</button>
+            </div>
         </header>
 
         <form id="scraper-form">
@@ -47,7 +53,17 @@
             <div class="history-header">
                 <h3><span class="pulse-dot"></span>試算表即時連動紀錄</h3>
                 <div class="header-actions">
-                    <div class="filter-container">
+                    <div id="map-controls" class="filter-container hidden">
+                        <button id="get-location-btn" class="btn-secondary btn-sm">📍 抓取我的定位</button>
+                        <select id="distance-filter" class="custom-select">
+                            <option value="all">顯示所有標案</option>
+                            <option value="5">5km 內</option>
+                            <option value="10">10km 內</option>
+                            <option value="20">20km 內</option>
+                            <option value="50">50km 內</option>
+                        </select>
+                    </div>
+                    <div class="filter-container list-controls">
                         <label for="category-filter">類別：</label>
                         <select id="category-filter" class="custom-select">
                             <option value="all" selected>全部</option>
@@ -104,6 +120,14 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div id="map-wrapper" class="hidden">
+                <div id="map" style="height: 500px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);"></div>
+                <div class="map-legend">
+                    <span class="legend-item"><span class="legend-info legend-me"></span> 我的位置</span>
+                    <span class="legend-item"><span class="legend-info legend-agency"></span> 機關地址</span>
+                    <span class="legend-item"><span class="legend-info legend-vendor"></span> 廠商地址</span>
+                </div>
             </div>
         </div>
     </div>

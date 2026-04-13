@@ -19,6 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isScraping = false;
     let scrapingAborted = false;
 
+    // Map State
+    let map = null;
+    let markersGroup = null;
+    let userLocationMarker = null;
+    let userCoords = null; // {lat, lng}
+    let currentView = 'list'; // 'list' | 'map'
+
     // Google Apps Script Web App API URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMextf-2rnS1Hygj2nd18hKwvU5rT_i-qfP7B0Q0xCkq8s8Z1gDO5_jGYF9_t2G0Pp/exec';
 
@@ -160,6 +167,176 @@ document.addEventListener('DOMContentLoaded', () => {
             urlInput.value = ''; // 清空輸入框
         }
     });
+
+    // --- 地圖與切換按鈕事件 ---
+    const viewListBtn = document.getElementById('view-list-btn');
+    const viewMapBtn = document.getElementById('view-map-btn');
+    const mapWrapper = document.getElementById('map-wrapper');
+    const historyWrapper = document.querySelector('.history-wrapper');
+    const mapControls = document.getElementById('map-controls');
+    const listControls = document.querySelectorAll('.list-controls');
+    const getLocationBtn = document.getElementById('get-location-btn');
+    const distanceFilter = document.getElementById('distance-filter');
+
+    viewListBtn.addEventListener('click', () => switchView('list'));
+    viewMapBtn.addEventListener('click', () => switchView('map'));
+    getLocationBtn.addEventListener('click', getUserLocation);
+    distanceFilter.addEventListener('change', () => applySortingAndRender());
+
+    function switchView(view) {
+        currentView = view;
+        if (view === 'list') {
+            viewListBtn.classList.add('active');
+            viewMapBtn.classList.remove('active');
+            mapWrapper.classList.add('hidden');
+            historyWrapper.classList.remove('hidden');
+            mapControls.classList.add('hidden');
+            listControls.forEach(el => el.classList.remove('hidden'));
+        } else {
+            viewListBtn.classList.remove('active');
+            viewMapBtn.classList.add('active');
+            mapWrapper.classList.remove('hidden');
+            historyWrapper.classList.add('hidden');
+            mapControls.classList.remove('hidden');
+            listControls.forEach(el => el.classList.add('hidden'));
+            
+            // 延遲初始化地圖確保容器尺寸正確
+            if (!map) {
+                setTimeout(initMap, 100);
+            } else {
+                map.invalidateSize();
+            }
+        }
+    }
+
+    function initMap() {
+        if (map) return;
+        
+        // 初始化地圖 (中心點設為台灣)
+        map = L.map('map').setView([23.6, 121], 7);
+        
+        // 使用 CartoDB Dark Matter 樣式地圖 (符合深色主題)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        markersGroup = L.layerGroup().addTo(map);
+        
+        // 渲染現有資料
+        applySortingAndRender();
+    }
+
+    function renderMapMarkers(dataArray) {
+        if (!map || !markersGroup) return;
+        markersGroup.clearLayers();
+
+        const agencyIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:#ef4444; width:12px; height:12px; border-radius:50%; border:2px solid white;'></div>",
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        const vendorIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:#10b981; width:12px; height:12px; border-radius:50%; border:2px solid white;'></div>",
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        dataArray.forEach(row => {
+            const tenderName = row['標案名稱'] || '未命名標案';
+            const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || '';
+            const popupContent = `
+                <div style="min-width:150px">
+                    <strong>${tenderName}</strong><br>
+                    <small>公告日: ${row['公告日'] || '-'}</small><hr style="margin:5px 0; opacity:0.2">
+                    機關: ${row['機關名稱'] || '-'}<br>
+                    得標廠商: ${row['得標廠商'] || '-'}<br>
+                    <a href="${tenderUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-weight:bold">開啟網址 ↗</a>
+                </div>
+            `;
+
+            // 機關標記
+            const aLat = parseFloat(row['機關地址緯度']);
+            const aLng = parseFloat(row['機關地址經度']);
+            if (!isNaN(aLat) && !isNaN(aLng)) {
+                L.marker([aLat, aLng], {icon: agencyIcon})
+                    .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 機關地址: ${row['機關地址']}</span>`)
+                    .addTo(markersGroup);
+            }
+
+            // 廠商標記
+            const vLat = parseFloat(row['廠商地址緯度']);
+            const vLng = parseFloat(row['廠商地址經度']);
+            if (!isNaN(vLat) && !isNaN(vLng)) {
+                L.marker([vLat, vLng], {icon: vendorIcon})
+                    .bindPopup(popupContent + `<br><span style="color:#94a3b8">📍 廠商地址: ${row['廠商地址']}</span>`)
+                    .addTo(markersGroup);
+            }
+        });
+
+        // 如果只有少數點，自動調整縮放
+        if (dataArray.length > 0 && dataArray.length < 50) {
+            const allCoords = [];
+            markersGroup.eachLayer(marker => allCoords.push(marker.getLatLng()));
+            if (allCoords.length > 0) {
+                const bounds = L.latLngBounds(allCoords);
+                map.fitBounds(bounds, {padding: [50, 50]});
+            }
+        }
+    }
+
+    function getUserLocation() {
+        if (!navigator.geolocation) {
+            alert('您的瀏覽器不支援定位功能');
+            return;
+        }
+
+        getLocationBtn.textContent = '定位中...';
+        navigator.geolocation.getCurrentPosition((position) => {
+            userCoords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            if (userLocationMarker) map.removeLayer(userLocationMarker);
+
+            userLocationMarker = L.circleMarker([userCoords.lat, userCoords.lng], {
+                radius: 8,
+                fillColor: "#3b82f6",
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup("<b>我在這裡</b>").openPopup();
+
+            map.setView([userCoords.lat, userCoords.lng], 13);
+            getLocationBtn.textContent = '📍 重新定位';
+            
+            // 觸發重新篩選 (因為 userCoords 改變了)
+            applySortingAndRender();
+            
+        }, (error) => {
+            console.error('定位失敗', error);
+            alert('無法獲取您的位置，請檢查權限設定。');
+            getLocationBtn.textContent = '📍 抓取我的定位';
+        });
+    }
+
+    // 計算兩個經緯度之間的距離 (km)
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // 地球半徑
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 
     function setLoadingState(isLoading, totalCount = 0, isStopping = false) {
         if (isLoading) {
@@ -348,6 +525,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return categoryMatch && agencyMatch && vendorMatch;
         });
 
+        // 2. 執行距離篩選 (如果用戶有定位)
+        const maxDist = distanceFilter ? distanceFilter.value : 'all';
+        if (maxDist !== 'all' && userCoords) {
+            filteredData = filteredData.filter(row => {
+                const aLat = parseFloat(row['機關地址緯度']);
+                const aLng = parseFloat(row['機關地址經度']);
+                const vLat = parseFloat(row['廠商地址緯度']);
+                const vLng = parseFloat(row['廠商地址經度']);
+                
+                let aDist = Infinity, vDist = Infinity;
+                if (!isNaN(aLat)) aDist = getDistance(userCoords.lat, userCoords.lng, aLat, aLng);
+                if (!isNaN(vLat)) vDist = getDistance(userCoords.lat, userCoords.lng, vLat, vLng);
+                
+                return aDist <= parseFloat(maxDist) || vDist <= parseFloat(maxDist);
+            });
+        }
+
         const sortValue = sortSelect.value;
         let sortedData = [...filteredData]; // 使用過濾後的資料進行排序
 
@@ -390,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderHistoryTable(sortedData);
+        if (map) renderMapMarkers(sortedData);
     }
 
     // 監聽選單變化

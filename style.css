@@ -112,6 +112,41 @@ h1 {
     font-size: 0.95rem;
     color: var(--text-secondary);
     line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.view-switch {
+    display: inline-flex;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+}
+
+.switch-btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.switch-btn.active {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.switch-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
 }
 
 /* Form Styles */
@@ -212,6 +247,23 @@ textarea#tender-url:focus {
     background: linear-gradient(135deg, #f87171, #ef4444);
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
     transform: translateY(-2px);
+}
+
+.btn-secondary {
+    padding: 0.6rem 1rem;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(148, 163, 184, 0.2);
+    border-color: var(--text-secondary);
 }
 
 /* Spinner */
@@ -588,4 +640,63 @@ tr:hover td {
         padding: 0.8rem;
         font-size: 0.9rem;
     }
+}
+
+/* Map specific styles */
+#map {
+    z-index: 5;
+    background: #0b111e;
+}
+
+.map-legend {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: 8px;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+}
+
+.legend-info {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-me { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+.legend-agency { background: #ef4444; }
+.legend-vendor { background: #10b981; }
+
+.hidden {
+    display: none !important;
+}
+
+/* Leaflet Customization for Dark Mode */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.leaflet-popup-content {
+    line-height: 1.6;
+}
+
+.leaflet-popup-content strong {
+    color: #3b82f6;
+}
+
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: rgba(255,255,255,0.1) !important;
 }
