@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span>📅 公告: ${row['公告日'] || '-'}</span>
                             <span>⏱️ 到期: ${row['結束日'] || '-'}</span>
                         </div>
-                        <div style="font-weight:bold; color:#1e293b; margin-bottom:6px; line-height:1.4; font-size:14px;">${row['標案名稱']}</div>
+                        <div style="font-weight:bold; color:#ef4444; margin-bottom:6px; line-height:1.4; font-size:15px;">📌 ${row['標案名稱'] || '未命名標案'}</div>
                         
                         <div style="margin-bottom:8px;">
                             <a href="${googleMapsUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-size:12px; display:inline-block; background:#f0f7ff; padding:4px 8px; border-radius:4px; border:1px solid #dbeafe;">
