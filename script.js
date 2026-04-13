@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'list'; // 'list' | 'map'
 
     // Google Apps Script Web App API URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxMextf-2rnS1Hygj2nd18hKwvU5rT_i-qfP7B0Q0xCkq8s8Z1gDO5_jGYF9_t2G0Pp/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzM3UVcOohAb8SvfENqmQEJhL6SRyuO0mBLiVizE6o9D-BGkujSFHuKf3SHpjdPsTDB/exec';
 
     // 頁面載入時先抓取一次歷史資料
     fetchHistory();
