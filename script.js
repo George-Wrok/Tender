@@ -673,9 +673,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 第一筆資料的 Keys 當作標題
         const allHeaders = Object.keys(dataArray[0]);
-        // ★ 新增邏輯：隱藏網址類的欄位，因為要合併到標案名稱中
-        const urlFieldNames = ['招標網站', '招標網址', '網址', '連結網址', '原網址'];
-        const headers = allHeaders.filter(h => !urlFieldNames.includes(h));
+        // ★ 新增邏輯：隱藏網址、座標與技術性欄位，以保持介面清爽 (地圖功能會直接讀取背景資料，不受影響)
+        const hiddenFieldNames = [
+            '招標網站', '招標網址', '網址', '連結網址', '原網址', 
+            '機關地址緯度', '機關地址經度', '廠商地址緯度', '廠商地址經度'
+        ];
+        const headers = allHeaders.filter(h => !hiddenFieldNames.includes(h));
 
         // 生成 Thead
         let theadHtml = '<tr>';
