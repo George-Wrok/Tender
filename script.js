@@ -153,12 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`${progress} API 請求失敗:`, error);
             }
 
-            // 如果還有下一筆，且尚未中斷，等待 10 秒
+            // 如果還有下一筆，且尚未中斷，等待隨機 4000~6000 毫秒
             if (i < urlsToProcess.length - 1 && !scrapingAborted) {
-                for (let seconds = 10; seconds > 0; seconds--) {
+                const waitMs = Math.floor(Math.random() * 2001) + 4000;
+                let remainingMs = waitMs;
+
+                while (remainingMs > 0) {
                     if (scrapingAborted) break;
-                    showStatus(`${progress} 成功，等待 ${seconds} 秒後處理下一筆...`, 'success');
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const displaySec = Math.ceil(remainingMs / 1000);
+                    showStatus(`${progress} 成功，等待約 ${displaySec} 秒後處理下一筆...`, 'success');
+                    
+                    const step = Math.min(1000, remainingMs);
+                    await new Promise(resolve => setTimeout(resolve, step));
+                    remainingMs -= step;
                 }
             }
         }
