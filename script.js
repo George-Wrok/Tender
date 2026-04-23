@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryFilter = document.getElementById('category-filter');
     const agencyFilter = document.getElementById('agency-filter');
     const vendorFilter = document.getElementById('vendor-filter');
+    const performanceFilter = document.getElementById('performance-filter');
 
     // Map & View Elements
     const viewListBtn = document.getElementById('view-list-btn');
@@ -532,6 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const categoryVal = categoryFilter ? categoryFilter.value : 'all';
         const agencyVal = agencyFilter ? agencyFilter.value : 'all';
         const vendorVal = vendorFilter ? vendorFilter.value : 'all';
+        const performanceVal = performanceFilter ? performanceFilter.value : 'all';
 
         let filteredData = currentHistoryData.filter(row => {
             // ★ 新增邏輯：如果在「結束」欄位打勾 (值為 "TRUE" 或 true)，則不顯示 (包含表格與地圖)
@@ -541,10 +543,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let categoryMatch = true;
             let agencyMatch = true;
             let vendorMatch = true;
+            let performanceMatch = true;
 
             const tName = row['標案名稱'] || '';
             const aAddr = row['機關地址'] || '';
             const vAddr = row['廠商地址'] || '';
+            const pAddr = row['履約地點'] || row['履約地址'] || '';
 
             // 類別篩選 (關鍵字比對標案名稱)
             if (categoryVal !== 'all') {
@@ -595,7 +599,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            return categoryMatch && agencyMatch && vendorMatch;
+            // 履約地點篩選
+            if (performanceVal !== 'all') {
+                if (performanceVal === 'taipei') {
+                    performanceMatch = pAddr.includes('台北') || pAddr.includes('臺北');
+                    if (pAddr.includes('新北')) performanceMatch = false;
+                } else if (performanceVal === 'new_taipei') {
+                    performanceMatch = pAddr.includes('新北');
+                } else if (performanceVal === 'taoyuan') {
+                    performanceMatch = pAddr.includes('桃園');
+                } else if (performanceVal === 'hsinchu') {
+                    performanceMatch = pAddr.includes('新竹');
+                } else if (performanceVal === 'other') {
+                    performanceMatch = !(pAddr.includes('台北') || pAddr.includes('臺北') || pAddr.includes('新北') || pAddr.includes('桃園') || pAddr.includes('新竹'));
+                }
+            }
+
+            return categoryMatch && agencyMatch && vendorMatch && performanceMatch;
         });
 
 
@@ -635,6 +655,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
                     let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
                     return valA - valB;
+                } else if (sortValue === 'performance_address') {
+                    // 履約地址 (預設：郵遞區號數字小到大 -> 遞增)
+                    let aMatch = (a['履約地點'] || a['履約地址'] || '').match(/^\D*(\d{1,3})/);
+                    let bMatch = (b['履約地點'] || b['履約地址'] || '').match(/^\D*(\d{1,3})/);
+                    let valA = aMatch ? parseInt(aMatch[1], 10) : 9999;
+                    let valB = bMatch ? parseInt(bMatch[1], 10) : 9999;
+                    return valA - valB;
                 }
 
                 return 0; // fallback
@@ -666,6 +693,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (vendorFilter) {
         vendorFilter.addEventListener('change', () => {
+            applySortingAndRender();
+        });
+    }
+
+    if (performanceFilter) {
+        performanceFilter.addEventListener('change', () => {
             applySortingAndRender();
         });
     }
