@@ -715,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const allHeaders = Object.keys(dataArray[0]);
         // ★ 新增邏輯：隱藏網址、座標與技術性欄位，以保持介面清爽 (地圖功能會直接讀取背景資料，不受影響)
         const hiddenFieldNames = [
-            '招標網站', '招標網址', '網址', '連結網址', '原網址', 
+            '招標網站', '招標網址', '網址', '連結網址', '原網址', '單位名稱',
             '機關地址緯度', '機關地址經度', '廠商地址緯度', '廠商地址經度'
         ];
         const headers = allHeaders.filter(h => !hiddenFieldNames.includes(h));
