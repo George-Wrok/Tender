@@ -22,8 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Map & View Elements
     const viewListBtn = document.getElementById('view-list-btn');
     const viewMapBtn = document.getElementById('view-map-btn');
+    const viewCardBtn = document.getElementById('view-card-btn');
     const mapWrapper = document.getElementById('map-wrapper');
     const historyWrapper = document.querySelector('.history-wrapper');
+    const cardWrapper = document.getElementById('card-wrapper');
+    const inputSection = document.getElementById('input-section');
     const mapControls = document.getElementById('map-controls');
     const listControls = document.querySelectorAll('.list-controls');
     const getLocationBtn = document.getElementById('get-location-btn');
@@ -39,13 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let markersGroup = null;
     let userLocationMarker = null;
     let userCoords = null; // {lat, lng}
-    let currentView = 'list'; // 'list' | 'map'
+    
+    // 自動適應：手機版預設為卡片，電腦版預設為列表
+    let currentView = window.innerWidth <= 600 ? 'card' : 'list'; 
 
     // Google Apps Script Web App API URL
     const API_URL = 'https://script.google.com/macros/s/AKfycbzM3UVcOohAb8SvfENqmQEJhL6SRyuO0mBLiVizE6o9D-BGkujSFHuKf3SHpjdPsTDB/exec';
 
     // 頁面載入時先抓取一次歷史資料
     fetchHistory();
+    switchView(currentView);
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -208,23 +214,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 地圖與切換按鈕事件 ---
     if (viewListBtn) viewListBtn.addEventListener('click', () => switchView('list'));
     if (viewMapBtn) viewMapBtn.addEventListener('click', () => switchView('map'));
+    if (viewCardBtn) viewCardBtn.addEventListener('click', () => switchView('card'));
     if (getLocationBtn) getLocationBtn.addEventListener('click', getUserLocation);
     if (markerTypeFilter) markerTypeFilter.addEventListener('change', () => applySortingAndRender());
 
     function switchView(view) {
         currentView = view;
+        
+        // Reset all buttons
+        if (viewListBtn) viewListBtn.classList.remove('active');
+        if (viewMapBtn) viewMapBtn.classList.remove('active');
+        if (viewCardBtn) viewCardBtn.classList.remove('active');
+        
+        // Hide all views
+        mapWrapper.classList.add('hidden');
+        historyWrapper.classList.add('hidden');
+        if (cardWrapper) cardWrapper.classList.add('hidden');
+        if (inputSection) inputSection.classList.add('hidden');
+        
         if (view === 'list') {
-            viewListBtn.classList.add('active');
-            viewMapBtn.classList.remove('active');
-            mapWrapper.classList.add('hidden');
+            if (viewListBtn) viewListBtn.classList.add('active');
             historyWrapper.classList.remove('hidden');
             mapControls.classList.add('hidden');
             listControls.forEach(el => el.classList.remove('hidden'));
-        } else {
-            viewListBtn.classList.remove('active');
-            viewMapBtn.classList.add('active');
+            if (inputSection) inputSection.classList.remove('hidden');
+        } else if (view === 'card') {
+            if (viewCardBtn) viewCardBtn.classList.add('active');
+            if (cardWrapper) cardWrapper.classList.remove('hidden');
+            mapControls.classList.add('hidden');
+            listControls.forEach(el => el.classList.remove('hidden'));
+        } else if (view === 'map') {
+            if (viewMapBtn) viewMapBtn.classList.add('active');
             mapWrapper.classList.remove('hidden');
-            historyWrapper.classList.add('hidden');
             mapControls.classList.remove('hidden');
             listControls.forEach(el => el.classList.add('hidden'));
             
@@ -343,17 +364,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span>📅 公告: ${row['公告日'] || '-'}</span>
                             <span>⏱️ 到期: ${row['結束日'] || '-'}</span>
                         </div>
-                        <div style="font-weight:bold; color:#ef4444; margin-bottom:6px; line-height:1.4; font-size:15px;">📌 ${row['標案名稱'] || '未命名標案'}</div>
+                        <div style="font-weight:bold; margin-bottom:6px; line-height:1.4; font-size:15px;">
+                            📌 <a href="javascript:void(0)" onclick="jumpToList('${tenderUrl}')" style="color:#ef4444; text-decoration:none;">${row['標案名稱'] || '未命名標案'}</a>
+                        </div>
                         
                         <div style="margin-bottom:8px;">
                             <a href="${googleMapsUrl}" target="_blank" style="color:#3b82f6; text-decoration:none; font-size:12px; display:inline-block; background:#f0f7ff; padding:4px 8px; border-radius:4px; border:1px solid #dbeafe;">
                                 📍 ${displayAddr} <span style="font-size:10px;">(導航 ↗)</span>
                             </a>
                         </div>
-                        
-                        <a href="${tenderUrl}" target="_blank" style="color:#475569; text-decoration:underline; font-size:12px; font-weight:600;">
-                            🔗 查看招標原始網頁 ↗
-                        </a>
                     </div>
                     ${idx < items.length - 1 ? '<hr style="margin:12px 0; border:0; border-top:2px solid #f1f5f9;">' : ''}
                 `;
@@ -689,6 +708,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderHistoryTable(sortedData);
         if (map) renderMapMarkers(sortedData);
+        renderCardLayout(sortedData);
+        
+        // 統一在此綁定事件，避免重複綁定
+        bindInteractiveEvents();
     }
 
     // 監聽選單變化
@@ -754,11 +777,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const endDateText = row['結束日'] || row['履約起迄日期'] || '';
             const endDate = parseROCDate(endDateText);
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // 只比較日期，不比較時間
-            
             const isExpired = endDate.getTime() !== 0 && endDate < today;
 
-            tbodyHtml += `<tr class="${isExpired ? 'row-expired' : ''}">`;
+            const rowTenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
+
+            tbodyHtml += `<tr class="${isExpired ? 'row-expired' : ''}" data-row-url="${rowTenderUrl}">`;
             headers.forEach(header => {
                 let text = row[header] || '';
                 const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '';
@@ -800,9 +823,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         historyBody.innerHTML = tbodyHtml;
+    }
 
-        // 重新綁定 Checkbox 與 Select 的點擊事件
-        bindInteractiveEvents();
+    // 渲染卡片佈局
+    function renderCardLayout(dataArray) {
+        if (!cardWrapper) return;
+        
+        if (dataArray.length === 0) {
+            cardWrapper.innerHTML = '<div class="text-center loading-text">目前尚無需要處理的資料</div>';
+            return;
+        }
+
+        let html = '';
+        dataArray.forEach(row => {
+            const endDateText = row['結束日'] || row['履約起迄日期'] || '';
+            const endDate = parseROCDate(endDateText);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isExpired = endDate.getTime() !== 0 && endDate < today;
+            
+            const tName = row['標案名稱'] || '未命名標案';
+            const tenderUrl = row['招標網站'] || row['招標網址'] || row['網址'] || row['連結網址'] || '#';
+            const agency = row['機關名稱'] || row['機關地址'] || '-';
+            const vendor = row['得標廠商'] || row['廠商地址'] || '-';
+            const publishDate = row['公告日'] || '-';
+            
+            const contactVal = typeof row['接觸'] === 'string' ? row['接觸'].trim() : '';
+
+            html += `
+            <div class="tender-card">
+                <div class="card-title">
+                    <a href="javascript:void(0)" onclick="jumpToList('${tenderUrl}')">${tName}</a>
+                </div>
+                <div class="card-body">
+                    <div class="card-info-item">
+                        <span class="card-label">機關</span>
+                        <span class="card-value">${agency.substring(0, 15)}${agency.length > 15 ? '...' : ''}</span>
+                    </div>
+                    <div class="card-info-item">
+                        <span class="card-label">廠商</span>
+                        <span class="card-value">${vendor.substring(0, 15)}${vendor.length > 15 ? '...' : ''}</span>
+                    </div>
+                    <div class="card-info-item">
+                        <span class="card-label">公告日</span>
+                        <span class="card-value">${publishDate}</span>
+                    </div>
+                    <div class="card-info-item">
+                        <span class="card-label">結束日</span>
+                        <span class="card-value ${isExpired ? 'val-expired' : ''}">${endDateText || '-'} ${isExpired ? '⚠️' : ''}</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <div class="action-contact">
+                        <select class="contact-select custom-select" data-url="${tenderUrl}" style="width: 100%; padding: 0.4rem 2rem 0.4rem 1rem;">
+                            <option value="">選擇接觸人...</option>
+                            <option value="凱" ${contactVal === '凱' ? 'selected' : ''}>🙋‍♂️ 凱</option>
+                            <option value="娟" ${contactVal === '娟' ? 'selected' : ''}>🙋‍♀️ 娟</option>
+                            <option value="喬" ${contactVal === '喬' ? 'selected' : ''}>🙋‍♂️ 喬</option>
+                        </select>
+                    </div>
+                    <div class="action-finish">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">結束</span>
+                        <label class="switch">
+                            <input type="checkbox" class="finish-checkbox" data-url="${tenderUrl}">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        cardWrapper.innerHTML = html;
     }
 
     // 綁定動態元素的事件監聽器
@@ -914,4 +1005,28 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // 全局跳轉函數
+    window.jumpToList = function(url) {
+        if (!url || url === '#') return;
+        
+        // 切換到列表視圖
+        switchView('list');
+        
+        // 延遲以確保 DOM 已經顯示，再進行捲動
+        setTimeout(() => {
+            const row = document.querySelector(`tr[data-row-url="${url}"]`);
+            if (row) {
+                // 平滑捲動到該列
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 加上閃爍動畫
+                row.classList.add('highlight-row');
+                // 動畫結束後移除 class
+                setTimeout(() => {
+                    row.classList.remove('highlight-row');
+                }, 5000);
+            }
+        }, 100);
+    };
+
 });

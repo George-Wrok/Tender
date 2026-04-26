@@ -23,34 +23,37 @@
             <h1>招標網資料抓取器</h1>
             <p class="subtitle">輸入招標網址，系統將自動解析並寫入您的Google試算表</p>
             <div class="view-switch">
-                <button id="view-list-btn" class="switch-btn active">📋 資料列表</button>
+                <button id="view-card-btn" class="switch-btn">📱 卡片佈局</button>
                 <button id="view-map-btn" class="switch-btn">🗺️ 地圖模式</button>
+                <button id="view-list-btn" class="switch-btn">📋 資料列表</button>
             </div>
         </header>
 
-        <form id="scraper-form">
-            <div class="input-group">
-                <label for="tender-url">請輸入標案網址 (可多筆貼上，每行一筆)</label>
-                <textarea id="tender-url" placeholder="https://web.pcc.gov.tw/..." required autocomplete="off" rows="3"></textarea>
-                <div class="input-border"></div>
+        <div id="input-section">
+            <form id="scraper-form">
+                <div class="input-group">
+                    <label for="tender-url">請輸入標案網址 (可多筆貼上，每行一筆)</label>
+                    <textarea id="tender-url" placeholder="https://web.pcc.gov.tw/..." required autocomplete="off" rows="3"></textarea>
+                    <div class="input-border"></div>
+                </div>
+
+                <button type="submit" id="submit-btn" class="btn-primary">
+                    <span class="btn-text">一鍵抓取並寫入</span>
+                    <span class="btn-loader loader-hidden">
+                        <svg class="spinner" viewBox="0 0 50 50">
+                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                    </span>
+                </button>
+            </form>
+
+            <div id="status-message" class="status-box hidden">
+                <!-- 訊息將在此顯示 -->
             </div>
 
-            <button type="submit" id="submit-btn" class="btn-primary">
-                <span class="btn-text">一鍵抓取並寫入</span>
-                <span class="btn-loader loader-hidden">
-                    <svg class="spinner" viewBox="0 0 50 50">
-                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                    </svg>
-                </span>
-            </button>
-        </form>
-
-        <div id="status-message" class="status-box hidden">
-            <!-- 訊息將在此顯示 -->
-        </div>
-
-        <div id="progress-container" class="progress-container hidden">
-            <div id="progress-bar" class="progress-bar"></div>
+            <div id="progress-container" class="progress-container hidden">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
         </div>
 
         <div id="history-container" class="history-container">
@@ -134,6 +137,10 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            
+            <div id="card-wrapper" class="card-wrapper hidden">
+                <!-- 卡片將在此動態產生 -->
             </div>
             <div id="map-wrapper" class="hidden">
                 <div id="map" style="height: 500px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);"></div>
