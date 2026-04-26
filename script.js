@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const vendorFilter = document.getElementById('vendor-filter');
     const performanceFilter = document.getElementById('performance-filter');
 
+    // Progress Bar Elements
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+
     // Map & View Elements
     const viewListBtn = document.getElementById('view-list-btn');
     const viewMapBtn = document.getElementById('view-map-btn');
@@ -102,6 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(true, urlsToProcess.length);
         hideStatus();
 
+        if (progressContainer) {
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+        }
+
         let successCount = 0;
         let skipCount = duplicates.length; // 預設跳過的筆數
         let errorCount = 0;
@@ -111,6 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (scrapingAborted) {
                 console.log('使用者中斷抓取');
                 break;
+            }
+
+            if (progressContainer) {
+                const percentage = ((i) / urlsToProcess.length) * 100;
+                progressBar.style.width = `${percentage}%`;
             }
 
             const url = urlsToProcess[i];
@@ -174,6 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 結束後的最終狀態
         isScraping = false;
         setLoadingState(false);
+
+        if (progressContainer) {
+            progressBar.style.width = '100%';
+            setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+        }
 
         if (scrapingAborted) {
             showStatus(`抓取已中斷。目前進度: 成功 ${successCount} 筆, 失敗 ${errorCount} 筆。`, 'error');

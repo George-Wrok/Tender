@@ -700,3 +700,21 @@ tr:hover td {
     color: #f8fafc !important;
     border-color: rgba(255,255,255,0.1) !important;
 }
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--success-color);
+    transition: width 0.3s ease;
+}
